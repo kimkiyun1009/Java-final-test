@@ -5,11 +5,14 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class Gongji {
+
+    private static final String ID_SAVE_FILE = "id_save.txt"; // ID 저장 파일 경로
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -38,20 +41,14 @@ public class Gongji {
             mainPanel.setBackground(Color.WHITE);
             add(mainPanel);
 
-            // 타이틀 라벨
-            JLabel titleLabel = new JLabel("로그인", JLabel.CENTER);
-            titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-            titleLabel.setBounds(0, 20, 400, 30);
-            mainPanel.add(titleLabel);
-
             // ID 라벨 및 필드
-            JLabel idLabel = new JLabel("ID");
+            JLabel idLabel = new JLabel("ID (학번)");
             idLabel.setBounds(50, 80, 80, 25);
-            idLabel.setFont(new Font("Arial", Font.BOLD, 12));
+            idLabel.setFont(new Font("맑은 고딕", Font.BOLD, 12));
             mainPanel.add(idLabel);
 
             idField = new JTextField();
-            idField.setBounds(130, 80, 200, 25);
+            idField.setBounds(110, 80, 185, 25);
             mainPanel.add(idField);
 
             // PW 라벨 및 필드
@@ -61,7 +58,7 @@ public class Gongji {
             mainPanel.add(pwLabel);
 
             passwordField = new JPasswordField();
-            passwordField.setBounds(130, 120, 200, 25);
+            passwordField.setBounds(110, 120, 185, 25);
             mainPanel.add(passwordField);
 
             // 체크박스
@@ -70,22 +67,63 @@ public class Gongji {
             saveIdCheckBox.setBackground(Color.WHITE);
             mainPanel.add(saveIdCheckBox);
 
-            // 로그인 버튼
+            // 로그인 버튼 중앙 정렬
             loginButton = new JButton("로그인");
-            loginButton.setBounds(130, 200, 200, 30);
+            loginButton.setSize(200, 30);
             loginButton.setBackground(Color.BLACK);
             loginButton.setForeground(Color.WHITE);
             loginButton.setFocusPainted(false);
+
+            // 버튼 위치 계산 (중앙 정렬)
+            int buttonX = (400 - loginButton.getWidth()) / 2;
+            int buttonY = 200;
+            loginButton.setLocation(buttonX, buttonY);
+
             mainPanel.add(loginButton);
+
+            // ID 불러오기
+            loadSavedId();
 
             // 로그인 버튼 클릭 이벤트
             loginButton.addActionListener((ActionEvent e) -> {
+                saveIdIfNeeded(); // ID 저장
                 dispose(); // 현재 창 닫기
                 SwingUtilities.invokeLater(() -> {
                     GongjiApp gongjiApp = new GongjiApp();
                     gongjiApp.setVisible(true);
                 });
             });
+        }
+
+        private void saveIdIfNeeded() {
+            if (saveIdCheckBox.isSelected()) {
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(ID_SAVE_FILE))) {
+                    writer.write(idField.getText());
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, "ID 저장에 실패했습니다: " + e.getMessage());
+                }
+            } else {
+                // 체크 해제된 경우 파일 삭제
+                File file = new File(ID_SAVE_FILE);
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
+        }
+
+        private void loadSavedId() {
+            File file = new File(ID_SAVE_FILE);
+            if (file.exists()) {
+                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                    String savedId = reader.readLine();
+                    if (savedId != null) {
+                        idField.setText(savedId);
+                        saveIdCheckBox.setSelected(true); // 저장 체크박스 선택 상태로 설정
+                    }
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(this, "ID 로드에 실패했습니다: " + e.getMessage());
+                }
+            }
         }
     }
 
@@ -113,12 +151,12 @@ public class Gongji {
 
             // 항목 추가
             itemPanels = new ArrayList<>();
-            addItem("JAVA프로그래밍2", "전공수업", "https://hive.cju.ac.kr/usr/classroom/main.do?currentMenuId=&courseApplySeq=6405449&courseActiveSeq=95929");
-            addItem("GUI프로그래밍", "전공수업", "https://hive.cju.ac.kr/usr/classroom/main.do?currentMenuId=&courseApplySeq=6405245&courseActiveSeq=95923");
-            addItem("운영체제", "전공수업", "https://hive.cju.ac.kr/usr/classroom/main.do?currentMenuId=&courseApplySeq=6404939&courseActiveSeq=95897");
-            addItem("빅데이터", "전공수업", "https://hive.cju.ac.kr/usr/classroom/main.do?currentMenuId=&courseApplySeq=6405363&courseActiveSeq=95925");
-            addItem("알고리즘 설계", "전공수업", "https://hive.cju.ac.kr/usr/classroom/main.do?currentMenuId=&courseApplySeq=6405121&courseActiveSeq=95915");
-            addItem("국제개발협력", "교양수업", "https://hive.cju.ac.kr/usr/classroom/main.do?currentMenuId=&courseApplySeq=6428863&courseActiveSeq=97419");
+            addItem("JAVA프로그래밍2", "전공수업", "https://example.com/1");
+            addItem("GUI프로그래밍", "전공수업", "https://example.com/2");
+            addItem("운영체제", "전공수업", "https://example.com/3");
+            addItem("빅데이터", "전공수업", "https://example.com/4");
+            addItem("알고리즘 설계", "전공수업", "https://example.com/5");
+            addItem("국제개발협력", "교양수업", "https://example.com/6");
         }
 
         private void addItem(String subject, String title, String url) {
@@ -253,4 +291,3 @@ public class Gongji {
         }
     }
 }
-

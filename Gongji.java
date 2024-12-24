@@ -2,9 +2,7 @@ package kky;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
@@ -143,6 +141,12 @@ public class Gongji {
             contentPane.setLayout(new BorderLayout());
             setContentPane(contentPane);
 
+            // 상단 패널에 + 버튼 추가
+            JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton addButton = new JButton("+");
+            topPanel.add(addButton);
+            contentPane.add(topPanel, BorderLayout.NORTH);
+
             // 스크롤 가능한 리스트 패널
             listPanel = new JPanel();
             listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
@@ -157,6 +161,16 @@ public class Gongji {
             addItem("빅데이터", "전공수업", "https://example.com/4");
             addItem("알고리즘 설계", "전공수업", "https://example.com/5");
             addItem("국제개발협력", "교양수업", "https://example.com/6");
+
+            // + 버튼 클릭 이벤트
+            addButton.addActionListener(e -> showCreateCellDialog());
+        }
+
+        private void showCreateCellDialog() {
+            String cellName = JOptionPane.showInputDialog(this, "이름을 입력하세요:", "새 셀 추가", JOptionPane.PLAIN_MESSAGE);
+            if (cellName != null && !cellName.trim().isEmpty()) {
+                addItem(cellName, "사용자 추가", "https://example.com/custom");
+            }
         }
 
         private void addItem(String subject, String title, String url) {
@@ -220,7 +234,7 @@ public class Gongji {
                 starButton = new StarButton();
                 starButton.addActionListener(e -> toggleFavorite());
 
-                this.addMouseListener(new MouseAdapter() {
+                addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
                         openLink();

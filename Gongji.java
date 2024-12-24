@@ -203,6 +203,14 @@ public class Gongji {
                 subjectLabel = new JLabel(subject);
                 titleLabel = new JLabel(" - " + title);
 
+                // 1. 커서 스타일 변경
+                subjectLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                titleLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+                // 5. 툴팁 추가
+                subjectLabel.setToolTipText("이 글씨를 클릭하면 해당 링크로 이동합니다.");
+                titleLabel.setToolTipText("이 글씨를 클릭하면 해당 링크로 이동합니다.");
+
                 JPanel textPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
                 textPanel.setOpaque(false);
                 textPanel.add(subjectLabel);

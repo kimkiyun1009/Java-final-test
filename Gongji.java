@@ -2,7 +2,10 @@ package kky;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
@@ -130,6 +133,7 @@ public class Gongji {
         private JPanel contentPane;
         private JPanel listPanel;
         private ArrayList<ItemPanel> itemPanels;
+        private boolean deleteMode;
 
         public GongjiApp() {
             setTitle("공지사항 어플");
@@ -141,10 +145,16 @@ public class Gongji {
             contentPane.setLayout(new BorderLayout());
             setContentPane(contentPane);
 
-            // 상단 패널에 + 버튼 추가
+            // 상단 패널에 + 버튼 및 휴지통 버튼 추가
             JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
             JButton addButton = new JButton("+");
+            JButton deleteButton = new JButton("X"); // 휴지통 버튼을 X로 설정
+            deleteButton.setForeground(Color.RED); // X 글자만 빨간색으로 설정
+            deleteButton.setBorderPainted(false);
+            deleteButton.setFocusPainted(false);
+            deleteButton.setContentAreaFilled(false);
             topPanel.add(addButton);
+            topPanel.add(deleteButton);
             contentPane.add(topPanel, BorderLayout.NORTH);
 
             // 스크롤 가능한 리스트 패널
@@ -164,12 +174,22 @@ public class Gongji {
 
             // + 버튼 클릭 이벤트
             addButton.addActionListener(e -> showCreateCellDialog());
+
+            // 휴지통 버튼 클릭 이벤트
+            deleteButton.addActionListener(e -> toggleDeleteMode());
         }
 
         private void showCreateCellDialog() {
             String cellName = JOptionPane.showInputDialog(this, "이름을 입력하세요:", "새 셀 추가", JOptionPane.PLAIN_MESSAGE);
             if (cellName != null && !cellName.trim().isEmpty()) {
                 addItem(cellName, "사용자 추가", "https://example.com/custom");
+            }
+        }
+
+        private void toggleDeleteMode() {
+            deleteMode = !deleteMode;
+            for (ItemPanel item : itemPanels) {
+                item.setDeleteMode(deleteMode);
             }
         }
 
@@ -195,10 +215,11 @@ public class Gongji {
         private class ItemPanel extends JPanel {
             private JLabel subjectLabel;
             private JLabel titleLabel;
-            private StarButton starButton;
+            private JButton starButton;
             private boolean favorite;
             private String url;
             private JLabel pinLabel; // 고정핀 이모티콘 라벨
+            private JButton deleteButton; // 삭제 버튼
 
             public ItemPanel(String subject, String title, String url) {
                 this.url = url;
@@ -231,18 +252,35 @@ public class Gongji {
                 textPanel.add(titleLabel);
 
                 // 별표 버튼
-                starButton = new StarButton();
+                starButton = new JButton("⭐");
                 starButton.addActionListener(e -> toggleFavorite());
 
-                addMouseListener(new MouseAdapter() {
+                // 삭제 버튼
+                deleteButton = new JButton("X");
+                deleteButton.setPreferredSize(new Dimension(20, 20));
+                deleteButton.setForeground(Color.RED); // X 글자만 빨간색으로 설정
+                deleteButton.setBorderPainted(false);
+                deleteButton.setFocusPainted(false);
+                deleteButton.setContentAreaFilled(false);
+                deleteButton.setVisible(false); // 기본적으로 숨김
+                deleteButton.addActionListener(e -> confirmDelete());
+
+                JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+                buttonPanel.setOpaque(false);
+                buttonPanel.add(starButton);
+                buttonPanel.add(deleteButton);
+
+                this.addMouseListener(new MouseAdapter() {
                     @Override
                     public void mouseClicked(MouseEvent e) {
-                        openLink();
+                        if (!deleteMode) {
+                            openLink();
+                        }
                     }
                 });
 
                 add(textPanel, BorderLayout.CENTER);
-                add(starButton, BorderLayout.EAST);
+                add(buttonPanel, BorderLayout.EAST);
             }
 
             private void toggleFavorite() {
@@ -251,7 +289,7 @@ public class Gongji {
                 // 고정핀 이모티콘 표시/숨김
                 pinLabel.setVisible(favorite);
 
-                starButton.setFavorite(favorite);
+                starButton.setText(favorite ? "🌟" : "⭐");
                 refreshList();
             }
 
@@ -263,52 +301,21 @@ public class Gongji {
                 }
             }
 
+            private void confirmDelete() {
+                int result = JOptionPane.showConfirmDialog(this, "삭제하시겠습니까?", "삭제 확인", JOptionPane.YES_NO_OPTION);
+                if (result == JOptionPane.YES_OPTION) {
+                    itemPanels.remove(this);
+                    listPanel.remove(this);
+                    refreshList();
+                }
+            }
+
+            public void setDeleteMode(boolean deleteMode) {
+                deleteButton.setVisible(deleteMode);
+            }
+
             public boolean isFavorite() {
                 return favorite;
-            }
-        }
-
-        private class StarButton extends JButton {
-            private boolean favorite;
-
-            public StarButton() {
-                setPreferredSize(new Dimension(30, 30));
-                setFocusPainted(false);
-                setContentAreaFilled(false);
-                setBorderPainted(false);
-            }
-
-            public void setFavorite(boolean favorite) {
-                this.favorite = favorite;
-                repaint();
-            }
-
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // 별 그리기
-                int[] xPoints = {15, 19, 29, 21, 24, 15, 6, 9, 1, 11};
-                int[] yPoints = {1, 11, 11, 17, 27, 21, 27, 17, 11, 11};
-                Polygon star = new Polygon(xPoints, yPoints, xPoints.length);
-
-                g2.setColor(getParent().getBackground());
-                g2.fillRect(0, 0, getWidth(), getHeight());
-
-                if (favorite) {
-                    g2.setColor(Color.YELLOW);
-                    g2.fillPolygon(star);
-                    g2.setColor(Color.BLACK);
-                    g2.setStroke(new BasicStroke(2.5f));
-                } else {
-                    g2.setColor(Color.LIGHT_GRAY);
-                    g2.fillPolygon(star);
-                    g2.setColor(Color.BLACK);
-                    g2.setStroke(new BasicStroke(1.0f));
-                }
-                g2.drawPolygon(star);
             }
         }
     }
